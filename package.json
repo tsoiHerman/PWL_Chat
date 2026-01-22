@@ -1,0 +1,20 @@
+{
+  "name": "secure-chat",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+  "backend": "cd backend && node server.js",
+  "frontend": "cd frontend && npm run dev",
+  "dev": "concurrently \"npm run backend\" \"npm run frontend\""
+},
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "concurrently": "^9.2.1"
+  }
+} 
+
+
+
