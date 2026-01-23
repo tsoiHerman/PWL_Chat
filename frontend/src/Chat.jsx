@@ -1,9 +1,12 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 
 export default function Chat({ user, onLogout }) {
   const [messages, setMessages] = useState([]);
   const [text, setText] = useState("");
   const [ws, setWs] = useState(null);
+
+  // Ref for auto-scroll
+  const messagesEndRef = useRef(null);
 
   // Connect to WebSocket
   useEffect(() => {
@@ -11,12 +14,17 @@ export default function Chat({ user, onLogout }) {
 
     socket.onmessage = (event) => {
       const msg = JSON.parse(event.data);
-      setMessages(msgs => [...msgs, msg]);
+      setMessages((msgs) => [...msgs, msg]);
     };
 
     setWs(socket);
     return () => socket.close();
   }, []);
+
+  // Auto-scroll whenever messages change
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
 
   // Get HH:MM timestamp
   function getTime() {
@@ -31,7 +39,7 @@ export default function Chat({ user, onLogout }) {
         text,
         time: getTime(),
         sender: user.id,
-        name: user.id // For now, use id as name
+        name: user.name || user.id, // Display name
       };
 
       ws.send(JSON.stringify(message));
@@ -48,12 +56,14 @@ export default function Chat({ user, onLogout }) {
   return (
     <div>
       {/* Header */}
-      <div style={{
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center",
-        marginBottom: 15
-      }}>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          marginBottom: 15,
+        }}
+      >
         <h2 style={{ margin: 0, color: "#2f3640" }}>Secure Chat</h2>
 
         <button
@@ -65,7 +75,7 @@ export default function Chat({ user, onLogout }) {
             padding: "6px 12px",
             fontSize: 13,
             borderRadius: 6,
-            cursor: "pointer"
+            cursor: "pointer",
           }}
         >
           Logout
@@ -73,15 +83,17 @@ export default function Chat({ user, onLogout }) {
       </div>
 
       {/* Messages */}
-      <div style={{
-        border: "1px solid #dcdde1",
-        height: 300,
-        overflowY: "auto",
-        padding: 15,
-        marginBottom: 15,
-        borderRadius: 8,
-        backgroundColor: "#f1f2f6"
-      }}>
+      <div
+        style={{
+          border: "1px solid #dcdde1",
+          height: 300,
+          overflowY: "auto",
+          padding: 15,
+          marginBottom: 15,
+          borderRadius: 8,
+          backgroundColor: "#f1f2f6",
+        }}
+      >
         {messages.length === 0 && (
           <div style={{ color: "#718093", textAlign: "center", marginTop: 50 }}>
             No messages yet. Start the conversation!
@@ -98,41 +110,45 @@ export default function Chat({ user, onLogout }) {
                 display: "flex",
                 flexDirection: "column",
                 alignItems: isMe ? "flex-end" : "flex-start",
-                marginBottom: 12
+                marginBottom: 12,
               }}
             >
               {/* Show sender name only for others */}
               {!isMe && (
-                <div style={{
-                  fontSize: 12,
-                  color: "#2f3640",
-                  marginBottom: 2,
-                  fontWeight: "bold"
-                }}>
+                <div
+                  style={{
+                    fontSize: 12,
+                    color: "#2f3640",
+                    marginBottom: 2,
+                    fontWeight: "bold",
+                  }}
+                >
                   {msg.name}
                 </div>
               )}
 
+              {/* Message bubble */}
               <div
                 style={{
-                  backgroundColor: isMe ? "#40739e" : "#44bd32",
+                  backgroundColor: isMe ? "#7f8487" : "#44bd32",
                   color: "#fff",
                   padding: "8px 12px",
                   borderRadius: 8,
                   maxWidth: "75%",
-                  wordBreak: "break-word"
+                  wordBreak: "break-word",
                 }}
               >
                 {msg.text}
               </div>
 
+              {/* Timestamp */}
               <div
                 style={{
                   fontSize: 11,
                   color: "#636e72",
                   marginTop: 3,
                   marginRight: isMe ? 6 : 0,
-                  marginLeft: isMe ? 0 : 6
+                  marginLeft: isMe ? 0 : 6,
                 }}
               >
                 {msg.time}
@@ -140,21 +156,26 @@ export default function Chat({ user, onLogout }) {
             </div>
           );
         })}
+
+        {/* Dummy div to scroll into view */}
+        <div ref={messagesEndRef} />
       </div>
 
       {/* Input */}
       <div style={{ display: "flex", gap: 10 }}>
         <input
           value={text}
-          onChange={e => setText(e.target.value)}
+          onChange={(e) => setText(e.target.value)}
           placeholder="Type your message..."
           style={{
             flex: 1,
             padding: "10px 12px",
             borderRadius: 8,
-            border: "1px solid #dcdde1"
+            border: "1px solid #dcdde1",
           }}
-          onKeyPress={e => { if (e.key === "Enter") sendMessage(); }}
+          onKeyPress={(e) => {
+            if (e.key === "Enter") sendMessage();
+          }}
         />
         <button
           onClick={sendMessage}
@@ -164,7 +185,7 @@ export default function Chat({ user, onLogout }) {
             border: "none",
             padding: "10px 16px",
             borderRadius: 8,
-            cursor: "pointer"
+            cursor: "pointer",
           }}
         >
           Send
