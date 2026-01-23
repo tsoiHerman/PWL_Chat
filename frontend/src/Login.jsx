@@ -10,7 +10,9 @@ export default function Login({ onLogin }) {
     const result = await verifyLogin(dummyAssertion);
 
     if (result.success) {
-      onLogin({ id: result.userId });
+      // Generate a random ID for this session
+      const randomId = "user-" + Math.floor(Math.random() * 10000);
+      onLogin({ id: randomId, name: randomId });
     }
   }
 

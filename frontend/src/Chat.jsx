@@ -5,29 +5,43 @@ export default function Chat({ user, onLogout }) {
   const [text, setText] = useState("");
   const [ws, setWs] = useState(null);
 
+  // Connect to WebSocket
   useEffect(() => {
     const socket = new WebSocket("ws://localhost:4000");
 
     socket.onmessage = (event) => {
-      setMessages(msgs => [...msgs, event.data]);
+      const msg = JSON.parse(event.data);
+      setMessages(msgs => [...msgs, msg]);
     };
 
     setWs(socket);
-
     return () => socket.close();
   }, []);
 
+  // Get HH:MM timestamp
+  function getTime() {
+    const now = new Date();
+    return now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  }
+
+  // Send message with sender ID
   function sendMessage() {
     if (ws && text.trim() !== "") {
-      ws.send(text);
+      const message = {
+        text,
+        time: getTime(),
+        sender: user.id,
+        name: user.id // For now, use id as name
+      };
+
+      ws.send(JSON.stringify(message));
       setText("");
     }
   }
 
+  // Logout handler
   function handleLogout() {
-    if (ws) {
-      ws.close();
-    }
+    if (ws) ws.close();
     onLogout();
   }
 
@@ -73,18 +87,59 @@ export default function Chat({ user, onLogout }) {
             No messages yet. Start the conversation!
           </div>
         )}
-        {messages.map((msg, i) => (
-          <div key={i} style={{
-            backgroundColor: "#44bd32",
-            color: "#fff",
-            padding: "8px 12px",
-            marginBottom: 8,
-            borderRadius: 6,
-            maxWidth: "80%"
-          }}>
-            {msg}
-          </div>
-        ))}
+
+        {messages.map((msg, i) => {
+          const isMe = msg.sender === user.id;
+
+          return (
+            <div
+              key={i}
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: isMe ? "flex-end" : "flex-start",
+                marginBottom: 12
+              }}
+            >
+              {/* Show sender name only for others */}
+              {!isMe && (
+                <div style={{
+                  fontSize: 12,
+                  color: "#2f3640",
+                  marginBottom: 2,
+                  fontWeight: "bold"
+                }}>
+                  {msg.name}
+                </div>
+              )}
+
+              <div
+                style={{
+                  backgroundColor: isMe ? "#40739e" : "#44bd32",
+                  color: "#fff",
+                  padding: "8px 12px",
+                  borderRadius: 8,
+                  maxWidth: "75%",
+                  wordBreak: "break-word"
+                }}
+              >
+                {msg.text}
+              </div>
+
+              <div
+                style={{
+                  fontSize: 11,
+                  color: "#636e72",
+                  marginTop: 3,
+                  marginRight: isMe ? 6 : 0,
+                  marginLeft: isMe ? 0 : 6
+                }}
+              >
+                {msg.time}
+              </div>
+            </div>
+          );
+        })}
       </div>
 
       {/* Input */}
