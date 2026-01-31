@@ -1,5 +1,4 @@
-# PWL_Chat
-KeyLess Text
+# KeyLess Text
 Secure text. No passwords.
 
 
